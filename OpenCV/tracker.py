@@ -279,7 +279,7 @@ WAIT = 1
 #Variables
 is_initialized = False
 cap = cv2.VideoCapture(0)
-fname = "occlusion_eyelevel_slow.avi"
+fname = "1.avi"
 flength = 70 # Length of video file in frames
 loop = True
 cap = cv2.VideoCapture(fname)

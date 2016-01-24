@@ -2,6 +2,7 @@
 using System.Collections;
 
 public class Cubes : MonoBehaviour {
+	//Drops Random Cubes on x axis
 
 	private float delay = 0.2f;
 	public GameObject cube;
