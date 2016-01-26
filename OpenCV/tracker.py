@@ -4,6 +4,7 @@
 #
 #Author: Taylor Brockhoeft
 #
+#branch
 
 import sys
 sys.path.append('C:\OpenCV_2.4.9\opencv\sources\samples\python2')
@@ -35,7 +36,9 @@ class Form():
         self.rect = cv2.boundingRect(self.form)
         self.convex_hull = cv2.convexHull(self.form) 
         self.leftmost = tuple(self.form[self.form[:,:,0].argmin()][0])
-        self.rightmost = tuple(self.form[self.form[:,:,0].argmax()][0])       
+        self.rightmost = tuple(self.form[self.form[:,:,0].argmax()][0])
+        self.dirx = 0.0
+        self.diry = 0.0
         #For Editing Mode, this needs to keep the y value
 
         #Self.occludeWarning = true
@@ -98,8 +101,9 @@ class Form():
         self.findLeftRightMost()
         self.history.appendleft(self.center()) #append initial center
         self.calculateVelocity()
+        self.calculateDirection()
         self.calculateRadius()
-        self.perimete = cv2.arcLength(self.form, True)
+        self.perimeter = cv2.arcLength(self.form, True)
         self.sendUDP();
         self.draw()
 
@@ -118,7 +122,7 @@ class Form():
     def draw(self):
         #self.showConvexHull()
         self.showLeftRightMost()
-        drawContour(b.id,(0,255,0),b.form, self.radius)
+        drawContour(self.id,(0,255,0),self.form, self.diry)
 
     def calculateRadius(self):
         self.rect = cv2.boundingRect(self.form)
@@ -133,14 +137,13 @@ class Form():
             endx,endy = self.history[len(self.history)-1]
             time = len(self.history)-1
         elif len(self.history) >= self.HISTORY_LENGTH:
-            #Now we have a better range of data
             startx,starty = self.history[0]
             endx,endy = self.history[self.HISTORY_LENGTH-1]
             time = self.HISTORY_LENGTH-1
         else:
             startx,starty = 0,0
             endx,endy = 0.0
-            time = 0.0
+            time = 1.0
 
         dist = distance((startx,starty),(endx,endy))
         self.velocity = dist/time
@@ -156,6 +159,29 @@ class Form():
                                             + str(self.radius) + "," + str(self.velocity)
         sock.sendto(mess , (UDP_IP, UDP_PORT))
         #print "sent " ,mess," to ",UDP_PORT, "For", self.id
+
+    def calculateDirection(self):
+        '''calculates the direction of a moving form in the x axis based on data stored in the history queue
+            larger shifts in movement will result in self.dirx to be a larger value.
+        '''
+        if len(self.history) < self.HISTORY_LENGTH and len(self.history) > 1:
+            #If less than history length
+            startx,starty = self.history[0]
+            endx,endy = self.history[len(self.history)-1]
+        elif len(self.history) >= self.HISTORY_LENGTH:
+            startx,starty = self.history[0]
+            endx,endy = self.history[self.HISTORY_LENGTH-1]
+        else:
+            startx,starty = 0,0
+            endx,endy = 0.0
+
+        self.dirx =endx-startx
+        #print self.dirx
+
+        if self.dirx > 0:
+            print self.id,"RIGHT"
+        else:
+            print self.id,"LEFT"
 
 def drawContour(label,color,contour, r=0):
     '''Draws Contour (C) at center point with color 'c' and label 'l'''
@@ -196,7 +222,6 @@ def distance(center,other):
 
 def findNForms(frame,n):
     '''Search for n forms within frame'''
-    print n
     forms = list()
     cnts,heir = cv2.findContours(frame.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
 
@@ -214,16 +239,62 @@ def findNForms(frame,n):
 
 def initialize():
     '''Initialize all form and meta data and send to Unity'''
-    sendSettingsUDP("COUNT",formcount)
+    global is_initialized
+    is_initialized = True
+    sendSettingsUDP("COUNT",formcount) #Sends number of forms tracked to unity
     contours = findNForms(thresh,formcount)
     for i,C in enumerate(contours):
         bodies.append(Form(i,C))
-    print "initialized"
+    print "Initialized"
+
+def clear():
+    global is_initialized
+    global bodies
+    is_initialized = False
+    bodies = list()
+    print "Cleared initialization"
 
 def sendSettingsUDP(name,val):
     ''' Sends Settings in the form "SET, NAME, VAL"'''
     mess = "SET," + str(name) + "," + str(val) + "," 
     sock.sendto(mess , (UDP_IP, UDP_PORT))
+
+def track():
+    #global bodies
+    tmpforms = list()        
+    contours = findNForms(thresh,formcount)
+
+    for i,C in enumerate(contours):
+        tmpforms.append(Form(i,C))
+        #drawContour(i,(0,0,255),C)
+
+    for b in bodies:
+        #Isolate and update Bodies
+        minDist = 400 
+        closest = None
+        for t in tmpforms:
+            newDist = distance(center(t.form),center(b.form))
+            #print "Dist", newDist, t.id, center(t.form), b.id, center(b.form)
+
+            if newDist < minDist:
+                #print "Dist",newDist
+                minDist = newDist
+                closest = t
+                #print "closest" , closest.id
+
+        if closest:
+            #print "Set", closest.id ,"to", b.id
+            b.setForm(closest.form)
+            #print "\n"
+        else:
+            "utoh"
+
+    for b in bodies:
+        b.update()
+
+    for b in bodies:
+        for bn in bodies:
+            b.isInBoundingBox(bn,10)
 
 ###GUI
 def set_scale_thresh_u(val):
@@ -242,16 +313,14 @@ def set_gui_initialized(val):
     ''' GUI set initialized'''
     global is_initialized
     if val == 0:
-        is_initialized = False
-        bodies = list()
+        clear()
     if val == 1:
-        is_initialized = True
         initialize()
 def set_gui_formcount(val):
     ''' GUI set bodycount and re-initialize'''
     global formcount
     formcount = val
-    bodies = list()
+    clear()
     initialize()
     
 def set_gui_exit(val):
@@ -279,12 +348,12 @@ WAIT = 1
 #Variables
 is_initialized = False
 cap = cv2.VideoCapture(0)
-fname = "1.avi"
-flength = 70 # Length of video file in frames
+fname = "2FormsTouchandGo.avi"
+flength = 40 # Length of video file in frames
 loop = True
 cap = cv2.VideoCapture(fname)
 c = 0 
-formcount = 1 #Number of Forms to Expect (can be set through gui)
+formcount = 2 #Number of Forms to Expect (can be set through gui)
 bodies = list() #Bodies Output
 run = True
 #GUI Defaults
@@ -304,10 +373,13 @@ while(run):
     c+=1
     #print c
     #Set loop to true to enable a looped video for debuging, make sure you have the right length c
-    if loop:     
+    if loop:
+        if c == 10:
+            initialize()
         if c == flength:
-            cap = cv2.VideoCapture(fname)
-            c = 0
+            break
+            #cap = cv2.VideoCapture(fname)
+            #c = 0
 
     # Capture frame-by-frame
     ret, frame = cap.read()
@@ -319,40 +391,9 @@ while(run):
     ret,thresh = cv2.threshold(gray,thresh_l,thresh_u,cv2.THRESH_BINARY)
 
     if is_initialized:
-        tmpforms = list()        
-        contours = findNForms(thresh,formcount)
-        
-        for i,C in enumerate(contours):
-            tmpforms.append(Form(i,C))
-            #drawContour(i,(0,0,255),C)
+        track()
 
-        for b in bodies:
-            #Isolate and update Bodies
-            minDist = 400 
-            closest = None
-            for t in tmpforms:
-                newDist = distance(center(t.form),center(b.form))
-                #print "Dist", newDist, t.id, center(t.form), b.id, center(b.form)
-
-                if newDist < minDist:
-                    #print "Dist",newDist
-                    minDist = newDist
-                    closest = t
-                    #print "closest" , closest.id
-
-            if closest:
-                #print "Set", closest.id ,"to", b.id
-                b.setForm(closest.form)
-                #print "\n"
-            else:
-                "utoh"
-
-        for b in bodies:
-            b.update()
-
-        for b in bodies:
-            for bn in bodies:
-                b.isInBoundingBox(bn,10)
+    cv2.waitKey(10)
 
     # Display the resulting frame
     cv2.imshow('frame',frame)
@@ -360,14 +401,10 @@ while(run):
 
     ##Keyboard shortcuts for debug
     if  (0xFF & cv2.waitKey(WAIT) == KEY_I) and is_initialized == False: #I - initialize (only initialize if we haven't already)
-        is_initialized = True
         initialize()
 
     if (0xFF &  cv2.waitKey(WAIT) == KEY_C) and is_initialized == True: #C - Clear initialization (only if it's been initialized)
-        print "Cleared initialization"
-        bodies = list()
-        is_initialized = False
-
+        clear()
     if 0xFF & cv2.waitKey(WAIT) == KEY_ESC:
         run = False
 
