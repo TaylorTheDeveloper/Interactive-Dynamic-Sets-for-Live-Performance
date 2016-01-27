@@ -100,7 +100,7 @@ class Form():
         self.calculateVelocity()
         self.calculateRadius()
         self.perimete = cv2.arcLength(self.form, True)
-        self.sendUDP();
+        self.sendUDP()
         self.draw()
 
     def isInBoundingBox(self, formobj, thresh):
@@ -156,6 +156,7 @@ class Form():
                                             + str(self.radius) + "," + str(self.velocity)
         sock.sendto(mess , (UDP_IP, UDP_PORT))
         #print "sent " ,mess," to ",UDP_PORT, "For", self.id
+        
 
 def drawContour(label,color,contour, r=0):
     '''Draws Contour (C) at center point with color 'c' and label 'l'''
