@@ -348,12 +348,12 @@ WAIT = 1
 #Variables
 is_initialized = False
 cap = cv2.VideoCapture(0)
-fname = "2FormsTouchandGo.avi"
+fname = "Left_Right_Center_MovingDownstage.avi"
 flength = 40 # Length of video file in frames
 loop = True
 cap = cv2.VideoCapture(fname)
 c = 0 
-formcount = 2 #Number of Forms to Expect (can be set through gui)
+formcount = 3 #Number of Forms to Expect (can be set through gui)
 bodies = list() #Bodies Output
 run = True
 #GUI Defaults
@@ -366,6 +366,7 @@ print "UDP target IP:", UDP_IP
 print "UDP target port:", UDP_PORT
 sock = socket.socket(socket.AF_INET, # Internet
                  socket.SOCK_DGRAM) # UDP
+
 
 ret, frame = cap.read()
 
