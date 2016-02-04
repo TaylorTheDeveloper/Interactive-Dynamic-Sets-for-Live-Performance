@@ -37,7 +37,7 @@ public class FormController : MonoBehaviour {
         {
             foreach (var form in bodies)
             {
-                form.root.transform.position = new Vector3(form.xPosRoot + xoffset, yoffset, form.yPosRoot + zoffset); //Change later
+                form.root.transform.position = form.body; //Change later
             }
         }
     }
