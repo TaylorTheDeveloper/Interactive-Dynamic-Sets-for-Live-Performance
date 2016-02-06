@@ -15,9 +15,10 @@ public class FormController : MonoBehaviour {
     //object info
     public GameObject d0_center, d1_center, d2_center, d3_center,
         handl, handr;
-    public float yoffset, xoffset, zoffset, div = 10.0f;
+    public Vector3 offset;
+    public float div = 10.0f;
     private Form[] bodies;
-    private int bodycount = 1;
+    private int bodycount = 4;
 
     //connection info
     private Thread receiveThread;
@@ -27,26 +28,20 @@ public class FormController : MonoBehaviour {
     //debug info
     private string lastReceivedUDPPacket;
     private List<string> allReceivedUDPPackets;
+    private IPEndPoint anyIP;
 
-
-    // Update is called once per frame
-    void Update()
-    {
-        UpdateFormData();
-        if (bodies.Length > 0)
-        {
-            foreach (var form in bodies)
-            {
-                form.root.transform.position = form.body; //Change later
-            }
-        }
-    }
 
 
     void Start() {
+        offset = new Vector3(-40, 6.2f, 30);
         Debug.Log(string.Format(@"Sending to 127.0.0.1 : {0}", port));
         client = new UdpClient(port);
+        anyIP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), port);
         bodies = new Form[bodycount];
+        for (var i = 0; i < bodies.Length; i++)
+        {
+            bodies[i] = new Form();
+        }
         allReceivedUDPPackets = new List<string>();
         for (var i = 0; i < bodies.Length; i++)
         {
@@ -70,46 +65,62 @@ public class FormController : MonoBehaviour {
 
     }
 
-    void PrintForm(Form f, string mess = "") {
-        Debug.Log(string.Format(@"{0}\n Center {1} {2}", mess, f.root.transform.position.x, f.root.transform.position.y));
+    // Update is called once per frame
+    void Update()
+    {
+        UpdateFormData();
+
+
     }
 
-    void OnGUI() {
-        var rectObj = new Rect(40, 10, 200, 400);
-        var style = new GUIStyle() {
-            alignment = TextAnchor.UpperLeft
-        };
-        GUI.Box(rectObj, string.Format(@"# UDPReceive\n127.0.0.1 {0} #\nLast Packet: \n {1}\n", port, lastReceivedUDPPacket), style);
-    }
+    //void PrintForm(Form f, string mess = "") {
+    //    Debug.Log(string.Format(@"{0}\n Center {1} {2}", mess, f.root.transform.position.x, f.root.transform.position.y));
+    //}
+
+    //void OnGUI() {
+    //    var rectObj = new Rect(40, 10, 200, 400);
+    //    var style = new GUIStyle() {
+    //        alignment = TextAnchor.UpperLeft
+    //    };
+    //    GUI.Box(rectObj, string.Format(@"# UDPReceive 127.0.0.1 {0} #Last Packet:  {1}", port, lastReceivedUDPPacket), style);
+    //}
 
     private void UpdateFormData()
     {
         //rewrite to serialize and deserialize packets.
         try
         {
-            var anyIP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), port);
-            var text = Encoding.UTF8.GetString(client.Receive(ref anyIP));
-            lastReceivedUDPPacket = text;
-            allReceivedUDPPackets.Add(text);
-            var words = text.Split(',');
-            if (words[0] == "SET")
+            if (client.Available > 0)
             {
-                Debug.Log(string.Format(@"Data Received {0}", text));
-                // 0 = Message Type, 1=name, 2=value
-                if (words[1] == "COUNT")
+                var text = Encoding.UTF8.GetString(client.Receive(ref anyIP));
+                lastReceivedUDPPacket = text;
+                allReceivedUDPPackets.Add(text);
+                var words = text.Split(',');
+                if (words[0] == "SET")
                 {
-                    SetNewForms(words);
+                    Debug.Log(string.Format(@"Data Received {0}", text));
+                    // 0 = Message Type, 1=name, 2=value
+                    if (words[1] == "COUNT")
+                    {
+                        SetNewForms(words);
+                    }
+                }
+                else if (words[0] == "DATA")
+                {
+                    UpdateForms(int.Parse(words[1]), words);
                 }
             }
-            else if (words[0] == "DATA")
-            {
-                UpdateForms(int.Parse(words[1]), words);
-            }
+           
 
         }
         catch (Exception ex)
         {
             Debug.Log(ex.ToString());
+        }
+
+        foreach (var form in bodies)
+        {
+            form.root.transform.position = form.body; //Change later
         }
     }
 
@@ -143,16 +154,22 @@ public class FormController : MonoBehaviour {
     }
     private void UpdateForms(int id, string[] msg)
     {
+
         // 0 = Message Type; 1 = id; 2,3 = xy root; 4,5 = xy leftmost; 6,7 = xy rightmost; 8 = self.radius; 9 = self.velocity
-        bodies[id].SetPositions(
-            float.Parse(msg[2]) / div,                      //xPosRoot
-            (-float.Parse(msg[3]) + zoffset) / (div * 2),   //yPosRoot
-            float.Parse(msg[4]) / div,                      //xPosLeftHand
-            (-float.Parse(msg[5]) + yoffset) / div,         //yPosLeftHand
-            float.Parse(msg[6]) / div,                      //xPosRightHand
-            (-float.Parse(msg[7]) + yoffset) / div,         //yPosRightHand
-            float.Parse(msg[8]),                            //radius
-            float.Parse(msg[9])                             //velocity
+        bodies[id].SetRoot(
+            float.Parse(msg[2]) / div,                //xPosRoot
+            0,                                        //yPosRoot)
+            (-float.Parse(msg[3])) / (div * 2));      //zPosRoot)
+
+        bodies[id].body += offset;
+
+        bodies[id].SetPositions(            
+            float.Parse(msg[4]) / div,                          //xPosLeftHand
+            (-float.Parse(msg[5])) / div,             //yPosLeftHand
+            float.Parse(msg[6]) / div,                          //xPosRightHand
+            (-float.Parse(msg[7])) / div,             //yPosRightHand
+            float.Parse(msg[8]),                                //radius
+            float.Parse(msg[9])                                 //velocity
             );
     }
 
