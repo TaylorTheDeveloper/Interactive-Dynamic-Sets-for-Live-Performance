@@ -1,6 +1,6 @@
 #Live Performance Tracker
 # Tracks Sihlouettes and sends their motion data to Unity3d via UDP
-# Alpha 0.009
+# Alpha 0.011
 #
 #Author: Taylor Brockhoeft
 #
