@@ -33,7 +33,7 @@ public class FormController : MonoBehaviour {
 
 
     void Start() {
-        offset = new Vector3(-40, 6.2f, 30);
+        offset = new Vector3(-27.2f, 6.2f, 30);
         Debug.Log(string.Format(@"Sending to 127.0.0.1 : {0}", port));
         client = new UdpClient(port);
         anyIP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), port);

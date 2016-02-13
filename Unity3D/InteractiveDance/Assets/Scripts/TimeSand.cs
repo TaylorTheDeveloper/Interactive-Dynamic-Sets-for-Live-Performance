@@ -13,7 +13,7 @@ public class TimeSand : MonoBehaviour
     private ParticleSystem.ShapeModule _width;
     private GameObject _parent;
     public int CurrentShrink;
-    public bool SingleDancer = true
+	public bool SingleDancer = true;
     [Range(-10,10)] public int LastAbsorbTime = 0;
     // Use this for initialization
     void Start ()

@@ -291,7 +291,7 @@ def track():
 
     for b in bodies:
         #Isolate and update Bodies
-        minDist = 400 
+        minDist = 100 
         closest = None
         for t in tmpforms:
             #newDist = distance(center(t.form),center(b.form))            
@@ -313,7 +313,7 @@ def track():
             #print "\n"
         else:
             #If none closest, then this body is lost
-            print "Im lost"
+            #print "Im lost"
             b.lost = True
 
     for b in bodies:
@@ -377,10 +377,10 @@ is_initialized = False
 cap = cv2.VideoCapture(0)
 fname = "02_100.MP4"
 flength = 100 # Length of video file in frames
-loop = True
-cap = cv2.VideoCapture(fname)
+loop = False
+#cap = cv2.VideoCapture(fname)
 c = 0 
-formcount = 2 #Number of Forms to Expect (can be set through gui)
+formcount = 1 #Number of Forms to Expect (can be set through gui)
 bodies = list() #Bodies Output
 run = True
 #GUI Defaults
@@ -413,6 +413,7 @@ while(run):
 
     # Capture frame-by-frame
     ret, frame = cap.read()
+    #print ret
 
     # Our operations on the frame come here
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -425,7 +426,7 @@ while(run):
 
     # Display the resulting frame
     cv2.imshow('frame',frame)
-    #cv2.imshow('thresh',thresh)      
+    cv2.imshow('thresh',thresh)      
 
     ##Keyboard shortcuts for debug
     if  (0xFF & cv2.waitKey(WAIT) == KEY_I) and is_initialized == False: #I - initialize (only initialize if we haven't already)
