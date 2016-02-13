@@ -13,7 +13,7 @@ from collections import deque
 import numpy as np
 import socket
 import cv2
-
+import time
 
 class Form():
     #Basic Form Class
@@ -39,6 +39,7 @@ class Form():
         self.rightmost = tuple(self.form[self.form[:,:,0].argmax()][0])
         self.dirx = 0.0
         self.diry = 0.0
+        self.lost = False
         #For Editing Mode, this needs to keep the y value
 
         #Self.occludeWarning = true
@@ -96,7 +97,10 @@ class Form():
         if M["m00"] == 0.0:
             M["m00"] = M["m00"] +1
         return (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
- 
+
+    def getRadius(self):
+        return self.radius
+
     def update(self):
         self.findLeftRightMost()
         self.history.appendleft(self.center()) #append initial center
@@ -178,10 +182,10 @@ class Form():
         self.dirx =endx-startx
         #print self.dirx
 
-        if self.dirx > 0:
-            print self.id,"RIGHT"
-        else:
-            print self.id,"LEFT"
+        # if self.dirx > 0:
+        #     print self.id,"RIGHT"
+        # else:
+        #     print self.id,"LEFT"
 
 def drawContour(label,color,contour, r=0):
     '''Draws Contour (C) at center point with color 'c' and label 'l'''
@@ -237,6 +241,17 @@ def findNForms(frame,n):
         i -= 1
     return forms
 
+def findFormsDynamic(frame,minArea):
+    '''Dynamically Locate and transmit coordinates for all forms'''
+    forms = list()
+    cnts,heir = cv2.findContours(frame.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+
+    for c in cnts:
+        if cv2.contourArea(c) > minArea**2:
+            forms.append(c)
+
+    return forms
+
 def initialize():
     '''Initialize all form and meta data and send to Unity'''
     global is_initialized
@@ -259,6 +274,16 @@ def sendSettingsUDP(name,val):
     mess = "SET," + str(name) + "," + str(val) + "," 
     sock.sendto(mess , (UDP_IP, UDP_PORT))
 
+def isMerged(a,b):
+    '''checks to see if two entities forms have merged
+    defined as having different ID's in approximatley the same space.
+    '''
+    if a.getID() != b.getID():
+        if distance(a.center(),b.center()) < 10: #will be zero if they're the same form
+            return True
+
+
+
 def track():
     #global bodies
     tmpforms = list()        
@@ -266,35 +291,43 @@ def track():
 
     for i,C in enumerate(contours):
         tmpforms.append(Form(i,C))
-        #drawContour(i,(0,0,255),C)
+        drawContour(i,(255,0,0),C)
+
+    for t in tmpforms:
+        t.lost = True
 
     for b in bodies:
         #Isolate and update Bodies
         minDist = 400 
         closest = None
         for t in tmpforms:
-            newDist = distance(center(t.form),center(b.form))
-            #print "Dist", newDist, t.id, center(t.form), b.id, center(b.form)
+            newDist = distance(center(t.form),center(b.form))            
 
             if newDist < minDist:
                 #print "Dist",newDist
-                minDist = newDist
-                closest = t
-                #print "closest" , closest.id
+                if t.lost == True:
+                    minDist = newDist
+                    closest = t
+                    #print "closest" , closest.id
+                    t.lost = False
 
         if closest:
+            #print "Dist", t.id, b.id, center(t.form), center(b.form), newDist
             #print "Set", closest.id ,"to", b.id
             b.setForm(closest.form)
+            b.lost = False
             #print "\n"
         else:
-            "utoh"
+            #If none closest, then this body is lost
+            print "Im lost"
+            b.lost = True
 
     for b in bodies:
         b.update()
 
-    for b in bodies:
-        for bn in bodies:
-            b.isInBoundingBox(bn,10)
+    # for b in bodies:
+    #     for bn in bodies:
+    #         b.isInBoundingBox(bn,10)
 
 ###GUI
 def set_scale_thresh_u(val):
@@ -348,12 +381,12 @@ WAIT = 1
 #Variables
 is_initialized = False
 cap = cv2.VideoCapture(0)
-fname = "Left_Right_Center_MovingDownstage.avi"
-flength = 40 # Length of video file in frames
+fname = "02_100.MP4"
+flength = 100 # Length of video file in frames
 loop = True
 cap = cv2.VideoCapture(fname)
 c = 0 
-formcount = 3 #Number of Forms to Expect (can be set through gui)
+formcount = 2 #Number of Forms to Expect (can be set through gui)
 bodies = list() #Bodies Output
 run = True
 #GUI Defaults
@@ -367,20 +400,21 @@ print "UDP target port:", UDP_PORT
 sock = socket.socket(socket.AF_INET, # Internet
                  socket.SOCK_DGRAM) # UDP
 
-
 ret, frame = cap.read()
+
 
 while(run):
     c+=1
     #print c
     #Set loop to true to enable a looped video for debuging, make sure you have the right length c
     if loop:
-        if c == 10:
+        if c == 100:
             initialize()
         if c == flength:
-            break
-            #cap = cv2.VideoCapture(fname)
-            #c = 0
+            #break
+            clear()
+            cap = cv2.VideoCapture(fname)
+            c = 0
 
     # Capture frame-by-frame
     ret, frame = cap.read()
@@ -394,11 +428,11 @@ while(run):
     if is_initialized:
         track()
 
-    cv2.waitKey(10)
+    time.sleep(.3)
 
     # Display the resulting frame
     cv2.imshow('frame',frame)
-    cv2.imshow('thresh',thresh)      
+    #cv2.imshow('thresh',thresh)      
 
     ##Keyboard shortcuts for debug
     if  (0xFF & cv2.waitKey(WAIT) == KEY_I) and is_initialized == False: #I - initialize (only initialize if we haven't already)
