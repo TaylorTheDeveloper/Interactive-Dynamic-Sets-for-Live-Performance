@@ -13,6 +13,7 @@ public class TimeSand : MonoBehaviour
     private ParticleSystem.ShapeModule _width;
     private GameObject _parent;
     public int CurrentShrink;
+    public bool SingleDancer = true
     [Range(-10,10)] public int LastAbsorbTime = 0;
     // Use this for initialization
     void Start ()
@@ -27,7 +28,10 @@ public class TimeSand : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
 	{
-        transform.position = new Vector3(transform.position.x, transform.position.y, DancerSandWaterFalls[0].transform.position.z);
+	    if (DancerSandWaterFalls.Length > 0 && SingleDancer)
+	    {
+            transform.position = new Vector3(transform.position.x, transform.position.y, DancerSandWaterFalls[0].transform.position.z);
+        }
 	    if (Hits > AbsorbTime && CurrentShrink < ShrinkIncrement)
 	    {
             _width.radius -= ShrinkSize;

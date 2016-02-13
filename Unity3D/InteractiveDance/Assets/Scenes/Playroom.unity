@@ -542,7 +542,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &703091583
 Transform:
   m_ObjectHideFlags: 0
@@ -599,6 +599,7 @@ MonoBehaviour:
   AbsorbTime: 200
   DancerSandWaterFalls: []
   CurrentShrink: 0
+  SingleDancer: 0
   LastAbsorbTime: -6
 --- !u!1001 &763524086
 Prefab:
@@ -609,7 +610,7 @@ Prefab:
     m_Modifications:
     - target: {fileID: 482696, guid: 6abf34fbd50b6554592280859e7bd0c2, type: 2}
       propertyPath: m_LocalPosition.x
-      value: -6.07
+      value: -19.8
       objectReference: {fileID: 0}
     - target: {fileID: 482696, guid: 6abf34fbd50b6554592280859e7bd0c2, type: 2}
       propertyPath: m_LocalPosition.y
@@ -641,7 +642,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 183890, guid: 6abf34fbd50b6554592280859e7bd0c2, type: 2}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 6abf34fbd50b6554592280859e7bd0c2, type: 2}
