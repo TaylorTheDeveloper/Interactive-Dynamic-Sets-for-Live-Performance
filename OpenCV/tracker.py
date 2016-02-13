@@ -4,7 +4,7 @@
 #
 #Author: Taylor Brockhoeft
 #
-#branch
+#branch: tracker_branch
 
 import sys
 sys.path.append('C:\OpenCV_2.4.9\opencv\sources\samples\python2')
@@ -12,15 +12,22 @@ from common import nothing, clock, draw_str
 from collections import deque
 import numpy as np
 import socket
-import cv2
 import time
+import cv2
 
 class Form():
     #Basic Form Class
     # Each form is serializable with self.id
-    # Motion History Length (center)
-    # Radius
-    # Velocity
+    # 
+    # Accessable Datas:
+    #   Radius
+    #   Velocity
+    #   Center
+    #   Motion History Length (center)
+    #   Convex Hull
+    #   Left/Right most points
+    #   Direction
+    #   lost (used for tracking purposes)
     # Sends UDP Data
     #
     #
@@ -41,9 +48,6 @@ class Form():
         self.diry = 0.0
         self.lost = False
         #For Editing Mode, this needs to keep the y value
-
-        #Self.occludeWarning = true
-        #self.occluded = True
 
     def findLeftRightMost(self):
         self.leftmost = tuple(self.form[self.form[:,:,0].argmin()][0])
@@ -77,8 +81,7 @@ class Form():
 
     def getConvexHull(self):
         #Gets Perimeter points        
-        self.convex_hull = cv2.convexHull(self.form)
-        
+        self.convex_hull = cv2.convexHull(self.form)        
 
     def getID (self):
         return self.id
@@ -129,6 +132,7 @@ class Form():
         drawContour(self.id,(0,255,0),self.form, self.diry)
 
     def calculateRadius(self):
+        '''Uses the bounding box to calculate pixel radius'''
         self.rect = cv2.boundingRect(self.form)
         x,y,w,h = self.rect
         self.radius = min(w/2, h/2)
@@ -209,14 +213,6 @@ def findIndex(cnt,contour):
     
     return -1
 
-def center(c):
-    M = cv2.moments(c)
-    if M["m00"] == 0.0:
-        M["m00"] = M["m00"] +1
-    center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
-    return center
-
-
 def distance(center,other):
     '''calculates distance between two centers'''
     x,y = center
@@ -275,17 +271,14 @@ def sendSettingsUDP(name,val):
     sock.sendto(mess , (UDP_IP, UDP_PORT))
 
 def isMerged(a,b):
-    '''checks to see if two entities forms have merged
+    '''checks to see if two forms entities have merged
     defined as having different ID's in approximatley the same space.
     '''
     if a.getID() != b.getID():
         if distance(a.center(),b.center()) < 10: #will be zero if they're the same form
             return True
 
-
-
 def track():
-    #global bodies
     tmpforms = list()        
     contours = findNForms(thresh,formcount)
 
@@ -301,7 +294,8 @@ def track():
         minDist = 400 
         closest = None
         for t in tmpforms:
-            newDist = distance(center(t.form),center(b.form))            
+            #newDist = distance(center(t.form),center(b.form))            
+            newDist = distance(t.center(),b.center())            
 
             if newDist < minDist:
                 #print "Dist",newDist
@@ -408,6 +402,7 @@ while(run):
     #print c
     #Set loop to true to enable a looped video for debuging, make sure you have the right length c
     if loop:
+        time.sleep(.3)
         if c == 100:
             initialize()
         if c == flength:
@@ -427,8 +422,6 @@ while(run):
 
     if is_initialized:
         track()
-
-    time.sleep(.3)
 
     # Display the resulting frame
     cv2.imshow('frame',frame)
