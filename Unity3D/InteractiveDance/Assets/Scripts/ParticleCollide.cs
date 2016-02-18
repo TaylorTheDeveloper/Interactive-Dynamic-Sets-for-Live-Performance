@@ -1,12 +1,12 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Diagnostics;
+using UnityEditor;
 using Debug = UnityEngine.Debug;
 
 public class ParticleCollide : MonoBehaviour {
 
 	// Use this for initialization
-    public bool HasWaterfall = false;
 	void Start () {
 	
 	}
@@ -18,13 +18,10 @@ public class ParticleCollide : MonoBehaviour {
 
     void OnParticleCollision(GameObject c)
     {
+
         if (c.tag == "InteractiveParticles")
         {
-            TimeSand.Hits += 1;
-            if (!HasWaterfall)
-            {
-                HasWaterfall = true;
-            }
+
         }
 
     }
