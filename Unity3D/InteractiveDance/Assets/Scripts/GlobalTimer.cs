@@ -3,7 +3,8 @@ using System.Collections;
 
 public class GlobalTimer : MonoBehaviour {
 
-    public static float RunningTime = 0;
+    public static float RunningTime = -1;
+    public bool IsStarted = false;
     // Use this for initialization
     void Start()
     {
@@ -19,6 +20,9 @@ public class GlobalTimer : MonoBehaviour {
     // Update is called once per frame
     void Update()
     {
-        RunningTime += Time.deltaTime;
+        if (IsStarted)
+        {
+            RunningTime += Time.deltaTime;
+        }
     }
 }

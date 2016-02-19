@@ -7,9 +7,16 @@ public class TTL : MonoBehaviour
     public float start;
     public float end;
     public bool attached;
-    public GameObject prefab;
 	// Use this for initialization
-	void Start () {
+	void Start ()
+	{
+	    var ttl = transform.parent.gameObject.GetComponent<TTL>();
+
+        if (ttl != null)
+        {
+            start = ttl.start;
+            end = ttl.end;
+        }
 	
 	}
 	

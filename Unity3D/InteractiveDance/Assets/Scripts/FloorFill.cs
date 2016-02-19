@@ -19,7 +19,7 @@ public class FloorFill : MonoBehaviour
 	    if (GlobalTimer.RunningTime > gameObject.GetComponent<TTL>().start)
         {
 
-            if (_runningTime < GlobalTimer.RunningTime && floor.transform.position.y > FloorMaxY)
+            if (_runningTime < GlobalTimer.RunningTime && floor.transform.position.y < FloorMaxY)
             {
                 _runningTime += 1;
                 floor.transform.position += new Vector3(0,.1f,0);

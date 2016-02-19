@@ -4,135 +4,134 @@ using System.Collections;
 public class ParticleEffectController : MonoBehaviour
 {
 
-    private GameObject[] _dancers;
-    public int UpdateFrequency = 3;
-    public int Delay = 1;
 
-
-    public bool StopTime;
     public bool ReverseGravity;
-    public bool Both;
+    public bool Looping;
+    public bool StopTime;
     public bool ConfirmSet;
-    private int _lastUpdate;
+    private bool isLooping;
+
+    private int _lastSpeedUpdate;
+    private float _frequency = 1;
+    private float _freqUpdate;
     [Range(0, 20)] public int Speed = 10;
-    private float _current = 0;
-    private float _delayCurrent = 5;
-	// Use this for initialization
-	void Start ()
+    public int CustomId;
+    public float CurrentTime;
+    // Use this for initialization
+    void Start ()
 	{
-        _dancers = GameObject.FindGameObjectsWithTag("Dancer");
-	    _lastUpdate = Speed;
+        //_lastSpeedUpdate = Speed;
     }
 
     // Update is called once per frame
     void Update()
     {
-        _current += Time.deltaTime;
-        if (_current >= UpdateFrequency)
-        {
-            CheckUpdateDancers();
-            _current = 0;
-        }
+        CurrentTime = GlobalTimer.RunningTime;
         if (ConfirmSet)
         {
             CheckEffects();
             ConfirmSet = false;
         }
-        if (_delayCurrent < Delay)
-        {
-            _delayCurrent += Time.deltaTime;
-            if (_delayCurrent >= Delay)
-            {
-                DisableOtherSystem();
-            }
-        }
-        if (_lastUpdate != Speed)
+        if (_lastSpeedUpdate != Speed)
         {
             UpdateSpeed();
-        }   
-	}
-
-    void UpdateSpeed()
-    {
-        foreach (var dancer in _dancers)
-        {
-            var reg = dancer.transform.GetChild(0).GetComponent<ParticleSystem>();
-            var reverse = dancer.transform.GetChild(1).GetComponent<ParticleSystem>();
-            reg.playbackSpeed = Speed * .1f;
-            reverse.playbackSpeed = Speed * .1f;
+            _lastSpeedUpdate = Speed;
+        }
+        if (isLooping)
+        {  
+            _freqUpdate += Time.deltaTime;
+            if (_freqUpdate > _frequency)
+            {
+                UpdateLoop();
+                _freqUpdate = 0;
+            }
         }
     }
 
-    void CheckUpdateDancers()
+    public void UpdateLoop()
     {
-        var currentDancers = GameObject.FindGameObjectsWithTag("Dancer");
-
-        if (_dancers.Length < currentDancers.Length)
+        if (FormController.bodies == null) return;
+        foreach (var dancer in FormController.bodies)
         {
-            _dancers = currentDancers;
+            var activeEffects = dancer.Root.transform.GetChild(2).gameObject.transform;
+            var effect = activeEffects.GetChild(0).gameObject;
+            if (effect != null && effect.GetComponent<Identifier>().Id == CustomId)
+            {
+                var effectPs = effect.GetComponent<ParticleSystem>();
+                if (effectPs.gravityModifier < 0)
+                {
+                    effect.transform.localPosition = new Vector3(0, 36.95f, 0);
+                    effect.transform.localEulerAngles = new Vector3(0, 180, 180);
+                    effectPs.gravityModifier = .5f;
+                }
+                else
+                {
+                    effect.transform.localPosition = new Vector3(0, 2, 0);
+                    effect.transform.localEulerAngles = Vector3.zero;
+                    effectPs.gravityModifier = -.5f;
+                }                  
+            }
+            
+        }
+
+    }
+
+    public void UpdateSpeed()
+    {
+        if (FormController.bodies == null) return;
+        foreach (var dancer in FormController.bodies)
+        {
+            var activeEffects = dancer.Root.transform.GetChild(2).transform;
+            for (var i = 0; i < activeEffects.childCount; i++)
+            {
+                var effect = activeEffects.GetChild(i).gameObject;
+                if (effect != null && effect.GetComponent<Identifier>().Id == CustomId)
+                {
+                    effect.GetComponent<ParticleSystem>().playbackSpeed = Speed * .1f;
+                    break;
+                }
+            }
         }
     }
 
-    void CheckEffects()
+    public void CheckEffects()
     {
-        foreach (var dancer in _dancers)
+        if (FormController.bodies == null) return;
+        foreach (var dancer in FormController.bodies)
         {
-            var reg = dancer.transform.GetChild(0).GetComponent<ParticleSystem>();
-            var reverse = dancer.transform.GetChild(1).GetComponent<ParticleSystem>();
-            var regEm = reg.emission;
-            var revEm = reverse.emission;
-
-            if (ReverseGravity)
+            var activeEffects = dancer.Root.transform.GetChild(2).gameObject.transform;
+            for (var i = 0; i < activeEffects.childCount; i++)
             {
-                revEm.enabled = true;
-                _delayCurrent = 0;
-            }
-            else
-            {
-                regEm.enabled = true;
-                _delayCurrent = 0;
-            }
-            if (Both)
-            {
-                revEm.enabled = true;
-                regEm.enabled = true;
-                _delayCurrent = 5;
-            }
-            else
-            {
-                _delayCurrent = 0;
-            }
-            if (StopTime)
-            {
-                reg.GetComponent<ParticleSystem>().Pause();
-                reverse.GetComponent<ParticleSystem>().Pause();
-            }
-            else
-            {
-                reg.GetComponent<ParticleSystem>().Play();
-                reverse.GetComponent<ParticleSystem>().Play();
-            }
-        }   
-    }
-
-    void DisableOtherSystem()
-    {
-        foreach (var dancer in _dancers)
-        {
-            var reg = dancer.transform.GetChild(0).GetComponent<ParticleSystem>();
-            var reverse = dancer.transform.GetChild(1).GetComponent<ParticleSystem>();
-            var regEm = reg.emission;
-            var revEm = reverse.emission;
-
-            if (ReverseGravity)
-            {
-                regEm.enabled = false;
-            }
-            else
-            {
-                revEm.enabled = false;
+                var effect = activeEffects.GetChild(i).gameObject;
+                if (effect.GetComponent<Identifier>().Id == CustomId)
+                {
+                    var effectPs = effect.GetComponent<ParticleSystem>();
+                    if (ReverseGravity && effectPs.gravityModifier > 0)
+                    {
+                        effect.transform.localPosition = new Vector3(0,2,0);
+                        effect.transform.localEulerAngles = Vector3.zero;
+                        effectPs.gravityModifier = -.5f;
+                    }
+                    else if (!ReverseGravity && effectPs.gravityModifier < 0)
+                    {
+                        effect.transform.localPosition = new Vector3(0, 36.95f, 0);
+                        effect.transform.localEulerAngles = new Vector3(0, 180, 180);
+                        effectPs.gravityModifier = .5f;
+                    }
+                    if (effectPs.isPlaying && StopTime)
+                    {
+                        effectPs.Pause();
+                    }
+                    else if (effectPs.isPaused && !StopTime)
+                    {
+                        effectPs.Play();
+                    }
+                    isLooping = Looping;
+                    break;
+                }
             }
         }
     }
+
 
 }

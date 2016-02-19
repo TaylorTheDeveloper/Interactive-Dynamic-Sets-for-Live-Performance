@@ -6,6 +6,8 @@ public class Form {
     public GameObject Root, RightHand, LeftHand;
     public Vector3 RootVector, LeftHandVector, RightHandVector;
     public float Radius, Velocity;
+    public bool IsFront = false;
+    public float IsFrontMagnitude;
 
     public void UpdatePositions()
     {

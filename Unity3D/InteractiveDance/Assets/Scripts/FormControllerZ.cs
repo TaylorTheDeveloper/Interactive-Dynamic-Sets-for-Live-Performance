@@ -10,7 +10,8 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 
-public class FormController : MonoBehaviour {
+public class FormControllerZ : MonoBehaviour
+{
 
     //object info
     public Vector3 offset; //-27.2, 6.2, 30
@@ -108,14 +109,13 @@ public class FormController : MonoBehaviour {
                     {
                         bodies[i].IsFront = true;
                         bodies[i].IsFrontMagnitude = second - front;
-                        Debug.Log(string.Format("{0} is in front by {1}", i, bodies[i].IsFrontMagnitude));
                     }
                     else
                     {
                         bodies[i].IsFront = false;
                         bodies[i].IsFrontMagnitude = 0;
                     }
-                        
+
                 }
             }
             else if (bodies != null && currentNoUpdateTime < maxTimeWithoutUpdate)
@@ -190,7 +190,7 @@ public class FormController : MonoBehaviour {
         for (var i = 0; i < bodies.Length; i++)
         {
             bodies[i] = new Form();
-            bodies[i].Root = (GameObject) Instantiate(dancePrefab, Vector3.zero, Quaternion.identity);
+            bodies[i].Root = (GameObject)Instantiate(dancePrefab, Vector3.zero, Quaternion.identity);
             bodies[i].RightHand = bodies[i].Root.transform.GetChild(0).gameObject;
             bodies[i].LeftHand = bodies[i].Root.transform.GetChild(1).gameObject;
             bodies[i].Root.transform.parent = transform;
@@ -206,9 +206,9 @@ public class FormController : MonoBehaviour {
         }
         bodies[id].id = id;
         // 0 = Message Type; 1 = id; 2,3 = xy root; 4,5 = xy leftmost; 6,7 = xy rightmost; 8 = self.radius; 9 = self.velocity
-        bodies[id].RootVector = new Vector3(float.Parse(msg[2])/div, 0, (-float.Parse(msg[3]))/(div * 2)) + offset;
-        bodies[id].LeftHandVector = new Vector3(float.Parse(msg[4]) / div + handOffset, 0, (-float.Parse(msg[5])) / (div * 2)) + offset - bodies[id].RootVector;
-        bodies[id].RightHandVector = new Vector3(float.Parse(msg[6]) / div - handOffset, 0, (-float.Parse(msg[7])) / (div * 2)) + offset - bodies[id].RootVector;
+        bodies[id].RootVector = new Vector3(float.Parse(msg[2]) / div, (-float.Parse(msg[3])) / (div * 2),0 ) + offset;
+        bodies[id].LeftHandVector = new Vector3(float.Parse(msg[4]) / div + handOffset, (-float.Parse(msg[5])) / (div * 2), 0 ) + offset - bodies[id].RootVector;
+        bodies[id].RightHandVector = new Vector3(float.Parse(msg[6]) / div - handOffset, (-float.Parse(msg[7])) / (div * 2), 0) + offset - bodies[id].RootVector;
         bodies[id].Radius = float.Parse(msg[8]);
         bodies[id].Velocity = float.Parse(msg[9]);
     }

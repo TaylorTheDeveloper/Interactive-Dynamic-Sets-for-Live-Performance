@@ -21,6 +21,8 @@ public class ParticleCollide : MonoBehaviour {
 
         if (c.tag == "InteractiveParticles")
         {
+            var em = c.GetComponent<ParticleSystem>().emission;
+            em.rate = new ParticleSystem.MinMaxCurve(em.rate.constantMax - .5f); ;
 
         }
 

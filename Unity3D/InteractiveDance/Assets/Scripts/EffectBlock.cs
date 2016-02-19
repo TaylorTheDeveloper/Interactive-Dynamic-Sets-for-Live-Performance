@@ -11,4 +11,5 @@ public class EffectBlock
     public float StartTime;
     public float EndTime;
     public bool IsAttached;
+    public int Id;
 }
