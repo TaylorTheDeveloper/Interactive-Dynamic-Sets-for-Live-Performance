@@ -32,22 +32,20 @@ debug = False
 speed = 1
 
 if not fo:
-	print "Incorrect Filename"
-	exit()
+    print "Incorrect Filename"
+    exit()
 
 while (True):
-
     for l in lines:
-    	print l
-    	if l == "END" and debug:
-    		count += 1
-    	if l[:5] == "SPEED":
-    		speed = float(l[5:])
-    	if count == mc and debug:
-    		break
-    	time.sleep(speed)
+        if l == "END" and debug:
+            count += 1
+        if l[:5] == "SPEED":
+            speed = float(l[5:])
+        if count == mc and debug:
+            break
+        time.sleep(speed)
         sendUDP(l)
-    if count == mc and debug:
-    	break
+        if count == mc and debug:
+            break
 #Close Socket`
 sock.close()

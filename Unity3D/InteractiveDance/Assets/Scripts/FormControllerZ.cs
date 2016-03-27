@@ -28,17 +28,18 @@ public class FormControllerZ : MonoBehaviour
 
     //debug info
     private string lastReceivedUDPPacket;
-    private List<string> allReceivedUDPPackets;
+
     private IPEndPoint anyIP;
     private float currentNoUpdateTime = 0;
     public float maxTimeWithoutUpdate = 3;
     private EffectGenerator _effectGen;
+
     void Start()
     {
         Debug.Log(string.Format(@"Sending to 127.0.0.1 : {0}", port));
         client = new UdpClient(port);
         anyIP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), port);
-        allReceivedUDPPackets = new List<string>();
+
         _effectGen = GameObject.Find("MasterControl").GetComponent<EffectGenerator>();
     }
 
@@ -58,7 +59,7 @@ public class FormControllerZ : MonoBehaviour
                 currentNoUpdateTime = 0;
                 var msg = Encoding.UTF8.GetString(client.Receive(ref anyIP));
                 lastReceivedUDPPacket = msg;
-                allReceivedUDPPackets.Add(msg);
+                Debug.Log(lastReceivedUDPPacket);
                 var words = msg.Split(',');
                 switch (words[0])
                 {
