@@ -11,10 +11,12 @@ public class MenuManager : MonoBehaviour
     public readonly int TimeToActivate = 1;
     public int CurrentRange = 0;
 
-    public GameObject Effect;
+    private GameObject Effect, AttachedEffect;
     public Texture[] TextureList = new Texture[TextureCount];
     public GameObject[] PrefabToActivate = new GameObject[TextureCount];
+    public bool[] IsAttached = new bool[TextureCount];
     private GameObject[] _options = new GameObject[OptionMax];
+    
 
     private int _newRange = 0;
     private bool _hasChanged = true;
@@ -23,7 +25,8 @@ public class MenuManager : MonoBehaviour
     void Start ()
 	{
 	    Effect = GameObject.Find("ActiveEffect");
-	    for (var i = 0; i < OptionMax; i++)
+        AttachedEffect = gameObject.transform.GetChild(gameObject.transform.childCount - 1).gameObject;
+        for (var i = 0; i < OptionMax; i++)
 	    {
             _options[i] = transform.GetChild(i).gameObject;
 	        _options[i].GetComponent<OptionSelector>().id = i;
@@ -56,9 +59,27 @@ public class MenuManager : MonoBehaviour
         {
             Destroy(child.gameObject);
         }
+        foreach (Transform child in AttachedEffect.transform)
+        {
+            Destroy(child.gameObject);
+        }
 
-        var obj = Instantiate(PrefabToActivate[(x + CurrentRange)]);
-        obj.transform.parent = Effect.transform;
+
+        if (IsAttached[x + CurrentRange])
+        {
+            var p = transform.parent.transform.position;
+            //var m = transform.position;
+            var e = Effect.transform.position;
+            var objVector = PrefabToActivate[(x + CurrentRange)].transform.position;
+            var obj = (GameObject)Instantiate(PrefabToActivate[(x + CurrentRange)], objVector + p + e, Quaternion.identity);
+            obj.transform.parent = AttachedEffect.transform;
+        }
+        else
+        {
+            var obj = Instantiate(PrefabToActivate[(x + CurrentRange)]);
+            obj.transform.parent = Effect.transform;
+        }
+
     }
 
 }

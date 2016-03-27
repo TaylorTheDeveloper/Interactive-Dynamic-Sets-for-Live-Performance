@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using System.Collections;
 
 public class MenuUp : MonoBehaviour
@@ -27,8 +28,13 @@ public class MenuUp : MonoBehaviour
                 _current += Time.deltaTime;
                 if (_current > _menuManager.TimeToActivate)
                 {
-                    Debug.Log("Up");
-                    _menuManager.CurrentRange = (_menuManager.CurrentRange - 3) % MenuManager.TextureCount;
+                    var temp = (_menuManager.CurrentRange - 3);
+                    if (temp < 0)
+                    {
+                        temp += MenuManager.TextureCount;
+                    }
+                    _menuManager.CurrentRange = temp % MenuManager.TextureCount;
+
                     _isActivated = true;
                 }
             }
