@@ -11,6 +11,7 @@ public class MenuManager : MonoBehaviour
     public readonly int TimeToActivate = 1;
     public int CurrentRange = 0;
 
+	public GameObject CurrentDisplayEffect;
     private GameObject Effect, AttachedEffect;
     public Texture[] TextureList = new Texture[TextureCount];
     public GameObject[] PrefabToActivate = new GameObject[TextureCount];
@@ -49,21 +50,35 @@ public class MenuManager : MonoBehaviour
 	        _hasChanged = true;
             _newRange = CurrentRange;
 	    }
+
+		//Debug.Log("effect Gestures");
+
 	
 	}
 
     public void ActivateElement(int x)
     {
-        Debug.Log((x + CurrentRange) + " is activated");
-        foreach (Transform child in Effect.transform)
-        {
-            Destroy(child.gameObject);
-        }
-        foreach (Transform child in AttachedEffect.transform)
-        {
-            Destroy(child.gameObject);
-        }
+		try
+		{
+        	Debug.Log((x + CurrentRange) + " is activated");
+        	foreach (Transform child in Effect.transform)
+        	{
+				//if(child != null)
+					{Destroy(child.gameObject);}
+        	}
+        	foreach (Transform child in AttachedEffect.transform)
+    	    {
+				//if(child != null)
+					{Destroy(child.gameObject);}
+        	}
+		}
+		catch (System.Exception e)
+		{
+			print(e.ToString());
+		}
 
+
+		Destroy(CurrentDisplayEffect);
 
         if (IsAttached[x + CurrentRange])
         {
@@ -72,11 +87,13 @@ public class MenuManager : MonoBehaviour
             var e = Effect.transform.position;
             var objVector = PrefabToActivate[(x + CurrentRange)].transform.position;
             var obj = (GameObject)Instantiate(PrefabToActivate[(x + CurrentRange)], objVector + p + e, Quaternion.identity);
+			CurrentDisplayEffect = obj;
             obj.transform.parent = AttachedEffect.transform;
         }
         else
         {
             var obj = Instantiate(PrefabToActivate[(x + CurrentRange)]);
+			CurrentDisplayEffect = obj;
             obj.transform.parent = Effect.transform;
         }
 
